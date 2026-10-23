@@ -1,48 +1,94 @@
+// SolarAI - Prisma schema
+// Database: SQLite
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"    // ✅
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
-// Farmer land assessment: inputs + AI engine results
-model Assessment {
+model User {
   id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("user") // "user" | "admin"
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  // ---- Inputs ----
-  farmerName        String
-  landAreaAcres     Float
-  state             String
-  district          String?
-  landType          String // fertile | semi_fertile | dry_rainfed | barren
-  agriIncomeYearly  Float // current annual agricultural income (INR)
-  solarRentYearly   Float // offered solar lease rent per year (INR)
-  contractYears     Int
-  solarGeneration   Float? // expected annual generation kWh (optional; engine estimates if null)
-  escalationPercent Float @default(0) // yearly escalation in lease rent (%)
-
-  // ---- Engine results (JSON snapshots) ----
-  solarEnergy     String // JSON: capacity, cuf, yearly kWh series
-  agriPrediction  String // JSON: growth model, yearly income series
-  forecast        String // JSON: 10-year comparison + scenarios + NPV
-  riskAnalysis    String // JSON: factors + overall score
-  suitability     String // JSON: score band + factor breakdown
-  aiReport        String // markdown personalized report
-  reportSource    String @default("engine") 
+  assessments    Assessment[]
+  conversations  AIConversation[]
 }
 
-// ML research lab: benchmark run for model comparison
-model ModelBenchmark {
+model Assessment {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Basic info
+  propertyType      String   // residential | commercial | industrial
+  city              String
+  state             String
+  country           String
+  monthlyBill       Float
+  monthlyConsumption Float?  // kWh, optional
+  estimatedConsumption Float? // derived if not provided
+
+  // Roof info
+  roofArea          Float    // sq ft
+  roofType          String
+  orientation       String
+  shading           String
+
+  // Solar info
+  sunlightHours     Float    // avg peak sun hours/day
+  panelType         String
+  budget            Float
+  energyOffset      Float    // percent 0-100
+
+  // Appliances stored as JSON string (SQLite has no native list/object)
+  appliances        String   // JSON array of {name, quantity, wattage, hoursPerDay, daysPerMonth}
+
+  // Weather snapshot
+  weatherData       String?  // JSON
+
+  // Calculation results stored as JSON string
+  calculationResults String  // JSON
+
+  // AI recommendation stored as JSON string
+  aiRecommendation   String? // JSON
+
+  // Derived cached values
+  suitabilityScore   Float
+  recommendedCapacity Float   // kW
+  estimatedAnnualSavings Float
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  conversations      AIConversation[]
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model AIConversation {
   id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assessmentId String?
+  assessment   Assessment? @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
+
+  // messages stored as JSON string array of {role, content, ts}
+  messages     String
+  title        String   @default("SolarAI Conversation")
+
   createdAt    DateTime @default(now())
-  task         String // agri_income | solar_yield
-  datasetSize  Int
-  trainSize    Int
-  testSize     Int
-  results      String // JSON: [{ model, mae, rmse, r2, trainMs }]
-  bestModel    String
-  notes        String?
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([assessmentId])
 }

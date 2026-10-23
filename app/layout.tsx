@@ -1,26 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+import { Providers } from "@/components/providers/providers";
 
 export const metadata: Metadata = {
-  title: "SolarLand AI — Solar Land & Farmer Revenue Planning",
+  title: "SolarAI — AI Solar Energy Advisor",
   description:
-    "AI-based comparison of solar land lease vs continued agriculture: solar energy prediction, 10-year revenue forecast, contract risk analysis and neutral personalized reports for Indian farmers.",
-  keywords: ["solar lease", "farmer income", "agriculture vs solar", "land suitability", "AI planning", "India solar"],
-  icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
-  },
+    "SolarAI analyzes your electricity, roof, sunlight and budget with a deterministic calculation engine and AI insights to recommend the right solar energy system for your home or business.",
+  keywords: [
+    "solar energy",
+    "solar advisor",
+    "AI solar analysis",
+    "solar calculator",
+    "renewable energy",
+    "rooftop solar",
+    "SolarAI",
+  ],
+  authors: [{ name: "SolarAI" }],
 };
 
 export default function RootLayout({
@@ -29,12 +26,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
-      >
-        {children}
-        <Toaster />
+    <html lang="en" className="light" suppressHydrationWarning>
+      <body className="antialiased bg-background text-foreground" style={{ fontFamily: "var(--font-sans)" }}>
+        <Providers>
+          {children}
+          <Toaster />
+          <SonnerToaster position="top-right" richColors closeButton />
+        </Providers>
       </body>
     </html>
   );
