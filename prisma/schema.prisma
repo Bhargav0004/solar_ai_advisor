@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"    // ✅
+  url      = env("DATABASE_URL")
+}
+
+// Farmer land assessment: inputs + AI engine results
+model Assessment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // ---- Inputs ----
+  farmerName        String
+  landAreaAcres     Float
+  state             String
+  district          String?
+  landType          String // fertile | semi_fertile | dry_rainfed | barren
+  agriIncomeYearly  Float // current annual agricultural income (INR)
+  solarRentYearly   Float // offered solar lease rent per year (INR)
+  contractYears     Int
+  solarGeneration   Float? // expected annual generation kWh (optional; engine estimates if null)
+  escalationPercent Float @default(0) // yearly escalation in lease rent (%)
+
+  // ---- Engine results (JSON snapshots) ----
+  solarEnergy     String // JSON: capacity, cuf, yearly kWh series
+  agriPrediction  String // JSON: growth model, yearly income series
+  forecast        String // JSON: 10-year comparison + scenarios + NPV
+  riskAnalysis    String // JSON: factors + overall score
+  suitability     String // JSON: score band + factor breakdown
+  aiReport        String // markdown personalized report
+  reportSource    String @default("engine") 
+}
+
+// ML research lab: benchmark run for model comparison
+model ModelBenchmark {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  task         String // agri_income | solar_yield
+  datasetSize  Int
+  trainSize    Int
+  testSize     Int
+  results      String // JSON: [{ model, mae, rmse, r2, trainMs }]
+  bestModel    String
+  notes        String?
+}
